@@ -1,0 +1,10 @@
+/ALAC/.svn
+
+/build
+/node_modules
+/npm-debug.log
+
+/ALAC/codec/*.o
+/ALAC/codec/libalac.a
+/ALAC/convert-utility/*.o
+/ALAC/convert-utility/alacconvert

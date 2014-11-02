@@ -1,0 +1,26 @@
+{
+  "name": "libalac",
+  "version": "0.0.1",
+  "description": "Apple Lossless codec bindings",
+
+  "homepage": "http://github.com/stephank/node-libalac",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/stephank/node-libalac.git"
+  },
+  "author": {
+    "name": "Stéphan Kochen",
+    "email": "stephan@kochen.nl",
+    "url": "http://stephan.kochen.nl/"
+  },
+
+  "devDependencies": {
+    "tap": "0.4"
+  },
+
+  "scripts": {
+    "test": "tap ./tests/tests.js"
+  },
+
+  "main": "./index.js"
+}
