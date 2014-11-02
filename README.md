@@ -11,7 +11,8 @@ Bindings to the official Apple Lossless (ALAC) encoder and decoder.
 The encoder is a regular stream:
 
     var alac = require('libalac');
-    input.pipe(alac.encoder()).pipe(output);
+    var enc = alac.encoder();
+    input.pipe(enc).pipe(output);
 
 `alac.encoder()` can also have an object argument with the following options:
 
@@ -19,6 +20,10 @@ The encoder is a regular stream:
  - `channels`, defaults to `2`
  - `bitDepth`, defaults to `16`
  - `framesPerPacket`, defaults to `4096`
+
+The encoder object also has the following properties:
+
+ - `cookie`, buffer containing the magic cookie.
 
 ### Hacking the code
 
