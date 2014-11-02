@@ -19,11 +19,17 @@ The encoder is a regular stream:
  - `sampleRate`, defaults to `44100`
  - `channels`, defaults to `2`
  - `bitDepth`, defaults to `16`
- - `framesPerPacket`, defaults to `4096`
+ - `framesPerPacket`, defaults to `4096` (usually no need to modify this)
 
 The encoder object also has the following properties:
 
- - `cookie`, buffer containing the magic cookie.
+ - `cookie`, a buffer containing the ALAC magic cookie. These are parameters
+   for the decoder, and is what you'd place in e.g. the `kuki` chunk of a
+   CAF-file.
+
+ - `packets`, array of offsets of packet starts. This array is only ever
+   pushed to, and can be modified, or even replaced with an array-like object,
+   as long as it has a `push` method.
 
 ### Hacking the code
 

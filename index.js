@@ -25,9 +25,12 @@ function ALACEncoder(options) {
     channels: this.channels,
     bitDepth: this.bitDepth
   });
-  this.cookie = this._enc.cookie;
 
+  this._streamPos = 0;
   this._partial = null;
+
+  this.cookie = this._enc.cookie;
+  this.packets = [];
 }
 util.inherits(ALACEncoder, Transform);
 
@@ -51,9 +54,15 @@ ALACEncoder.prototype._transform = function(chunk, encoding, done) {
     pos = end;
     remainder -= bpp;
 
+    if (!bytes)
+      continue;
+
+    this.packets.push(this._streamPos);
+    this._streamPos += bytes;
+
     if (bytes === outSize)
       this.push(out);
-    else if (bytes)
+    else
       this.push(out.slice(0, bytes));
   }
 
