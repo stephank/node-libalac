@@ -18,6 +18,7 @@ static Persistent<String> frames_per_packet_symbol;
 static Persistent<String> sample_rate_symbol;
 static Persistent<String> channels_symbol;
 static Persistent<String> bit_depth_symbol;
+static Persistent<String> cookie_symbol;
 
 
 // XXX: Stolen from convert-utility.
@@ -129,7 +130,12 @@ private:
       return throw_alac_error(ret);
     }
 
+    uint32_t cookieSize = e->enc_.GetMagicCookieSize(e->outf_.mChannelsPerFrame);
+    char cookie[cookieSize];
+    e->enc_.GetMagicCookie(cookie, &cookieSize);
+
     e->Wrap(args.This());
+    e->handle_->Set(cookie_symbol, Buffer::New(cookie, cookieSize)->handle_);
     return scope.Close(e->handle_);
   }
 
@@ -167,6 +173,7 @@ Initialize(Handle<Object> target)
   sample_rate_symbol = NODE_PSYMBOL("sampleRate");
   channels_symbol = NODE_PSYMBOL("channels");
   bit_depth_symbol = NODE_PSYMBOL("bitDepth");
+  cookie_symbol = NODE_PSYMBOL("cookie");
 
   NODE_DEFINE_CONSTANT(target, kALACDefaultFramesPerPacket);
   NODE_DEFINE_CONSTANT(target, kALACMaxEscapeHeaderBytes);

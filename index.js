@@ -25,6 +25,7 @@ function ALACEncoder(options) {
     channels: this.channels,
     bitDepth: this.bitDepth
   });
+  this.cookie = this._enc.cookie;
 
   this._partial = null;
 }
