@@ -1,4 +1,4 @@
-## libalac
+## libalac [![Build Status](https://secure.travis-ci.org/stephank/node-libalac.png)](http://travis-ci.org/stephank/node-libalac)
 
 Bindings to the official Apple Lossless (ALAC) encoder and decoder.
 
