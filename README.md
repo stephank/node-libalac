@@ -23,7 +23,7 @@ readable and writable stream options, along with the following:
 
  - `sampleRate` (in Hz) *required*
  - `channels`, *required*
- - `bitDepth`, *rqeuired*
+ - `bitDepth`, *required*
  - `framesPerPacket`, defaults to `4096` (usually no need to modify this)
 
 The encoder object also has the following properties:
