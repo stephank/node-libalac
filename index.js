@@ -57,7 +57,7 @@ ALACEncoder.prototype._transform = function(chunk, encoding, done) {
     if (!bytes)
       continue;
 
-    this.packets.push(this._streamPos);
+    this.packets.push(bytes);
     this._streamPos += bytes;
 
     if (bytes === outSize)
@@ -78,6 +78,8 @@ ALACEncoder.prototype._flush = function(done) {
     var out = new Buffer(outSize);
 
     var bytes = this._enc.encode(this._partial, out);
+
+    this.packets.push(bytes);
 
     if (bytes === outSize)
       this.push(out);
