@@ -6,19 +6,24 @@ Bindings to the official Apple Lossless (ALAC) encoder and decoder.
 
     $ npm install libalac
 
-### Usage
+### Encoder usage
 
 The encoder is a regular stream:
 
     var alac = require('libalac');
-    var enc = alac.encoder();
+    var enc = alac.encoder({
+      sampleRate: 44100,
+      channels: 2,
+      bitDepth: 16
+    });
     input.pipe(enc).pipe(output);
 
-`alac.encoder()` can also have an object argument with the following options:
+`alac.encoder()` must have an object argument, which can contain regular
+readable and writable stream options, along with the following:
 
- - `sampleRate`, defaults to `44100`
- - `channels`, defaults to `2`
- - `bitDepth`, defaults to `16`
+ - `sampleRate` (in Hz) *required*
+ - `channels`, *required*
+ - `bitDepth`, *rqeuired*
  - `framesPerPacket`, defaults to `4096` (usually no need to modify this)
 
 The encoder object also has the following properties:
@@ -27,9 +32,14 @@ The encoder object also has the following properties:
    for the decoder, and is what you'd place in e.g. the `kuki` chunk of a
    CAF-file.
 
- - `packets`, array of offsets of packet starts. This array is only ever
+ - `packets`, array of sizes of packets in the stream. This array is only ever
    pushed to, and can be modified, or even replaced with an array-like object,
    as long as it has a `push` method.
+
+ - `sampleRate`, `channels`, `bitDepth`, and `framesPerPacket` containing the
+   final parameters used in the encoder.
+
+Note that the encoder always reads input in native byte order!
 
 ### Hacking the code
 
