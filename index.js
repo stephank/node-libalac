@@ -3,21 +3,27 @@ var Transform = require('stream').Transform;
 var binding = require('./build/Release/binding.node');
 
 
-exports.framesPerPacket = binding.kALACDefaultFramesPerPacket;
-exports.sampleRate = 44100;
-exports.channels = 2;
-exports.bitDepth = 16;
+exports.defaultFramesPerPacket = binding.kALACDefaultFramesPerPacket;
 
 
 function ALACEncoder(options) {
   Transform.call(this, options);
 
-  this.framesPerPacket = options.framesPerPacket || exports.framesPerPacket;
-  this.sampleRate = options.sampleRate || exports.ampleRate;
-  this.channels = options.channels || exports.channels;
-  this.bitDepth = options.bitDepth || exports.bitDepth;
+  if (typeof(options.sampleRate) !== 'number')
+    throw new Error("Missing sample rate parameter");
+  this.sampleRate = options.sampleRate;
 
-  this.bytesPerPacket = this.channels * (this.bitDepth >> 3) * this.framesPerPacket;
+  if (typeof(options.channels) !== 'number')
+    throw new Error("Missing channels parameter");
+  this.channels = options.channels;
+
+  if (typeof(options.bitDepth) !== 'number')
+    throw new Error("Missing bit depth parameter");
+  this.bitDepth = options.bitDepth;
+
+  this.framesPerPacket = options.framesPerPacket || exports.defaultFramesPerPacket;
+
+  this._bytesPerPacket = this.channels * (this.bitDepth >> 3) * this.framesPerPacket;
 
   this._enc = new binding.Encoder({
     framesPerPacket: this.framesPerPacket,
@@ -43,7 +49,7 @@ ALACEncoder.prototype._transform = function(chunk, encoding, done) {
   var pos = 0;
   var remainder = chunk.length;
   var enc = this._enc;
-  var bpp = this.bytesPerPacket;
+  var bpp = this._bytesPerPacket;
   var outSize = bpp + binding.kALACMaxEscapeHeaderBytes;
   while (remainder >= bpp) {
     var out = new Buffer(outSize);
