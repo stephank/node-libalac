@@ -32,3 +32,27 @@ test('basic encode', function(t) {
     t.same(enc.packets, sine_pakt, 'packet table matches fixture');
   });
 });
+
+test('basic decode', function(t) {
+  t.plan(1);
+
+  var enc = alac.decoder({
+    cookie: sine_kuki,
+    channels: 2,
+    bitDepth: 16,
+    framesPerPacket: alac.defaultFramesPerPacket,
+    packets: sine_pakt
+  });
+  enc.end(sine_alac);
+
+  var chunks = [];
+  enc.on('readable', function() {
+    var chunk = enc.read();
+    if (chunk)
+      chunks.push(chunk);
+  });
+  enc.on('end', function() {
+    var outb = Buffer.concat(chunks);
+    t.same(outb, sine_pcm, 'decompressed output matches fixture');
+  });
+});

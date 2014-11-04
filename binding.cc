@@ -157,6 +157,79 @@ private:
 };
 
 
+class Decoder : ObjectWrap
+{
+public:
+  static void
+  Initialize(Handle<Object> target)
+  {
+    Handle<FunctionTemplate> t = FunctionTemplate::New(New);
+    t->InstanceTemplate()->SetInternalFieldCount(1);
+
+    NODE_SET_PROTOTYPE_METHOD(t, "decode", Decode);
+
+    target->Set(String::NewSymbol("Decoder"), t->GetFunction());
+  }
+
+  virtual
+  ~Decoder() {}
+
+private:
+  Decoder() : dec_() {}
+
+  static Handle<Value>
+  New(const Arguments &args)
+  {
+    HandleScope scope;
+
+    Handle<Object> o = Handle<Object>::Cast(args[0]);
+    Handle<Value> v;
+
+    Decoder *d = new Decoder();
+
+    // Fill parameters.
+    v = o->Get(cookie_symbol);
+    d->channels_= o->Get(channels_symbol)->Uint32Value();
+    d->frames_ = o->Get(frames_per_packet_symbol)->Uint32Value();
+
+    // Init decoder.
+    int32_t ret = d->dec_.Init(Buffer::Data(v), Buffer::Length(v));
+    if (ret != ALAC_noErr) {
+      delete d;
+      return throw_alac_error(ret);
+    }
+
+    // Init self.
+    d->Wrap(args.This());
+    return scope.Close(d->handle_);
+  }
+
+  static Handle<Value>
+  Decode(const Arguments &args)
+  {
+    HandleScope scope;
+
+    Decoder *d = ObjectWrap::Unwrap<Decoder>(args.This());
+
+    BitBuffer in;
+    BitBufferInit(&in, (uint8_t *) Buffer::Data(args[0]), Buffer::Length(args[0]));
+    uint8_t *out = (uint8_t *) Buffer::Data(args[1]);
+
+    uint32_t numFrames;
+    int32_t ret = d->dec_.Decode(&in, out, d->frames_, d->channels_, &numFrames);
+    if (ret != ALAC_noErr)
+      return throw_alac_error(ret);
+
+    return scope.Close(Uint32::New(numFrames));
+  }
+
+private:
+  ALACDecoder dec_;
+  uint32_t channels_;
+  uint32_t frames_;
+};
+
+
 static void
 Initialize(Handle<Object> target)
 {
@@ -172,6 +245,7 @@ Initialize(Handle<Object> target)
   NODE_DEFINE_CONSTANT(target, kALACMaxEscapeHeaderBytes);
 
   Encoder::Initialize(target);
+  Decoder::Initialize(target);
 }
 
 
