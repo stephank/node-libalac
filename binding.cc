@@ -20,7 +20,6 @@ static Persistent<String> channels_symbol;
 static Persistent<String> bit_depth_symbol;
 static Persistent<String> cookie_symbol;
 
-
 // XXX: Stolen from convert-utility.
 enum
 {
@@ -44,47 +43,6 @@ throw_alac_error(int32_t ret)
     default:
       return ThrowException(Exception::Error(
           String::New("ALAC error: unknown error")));
-  }
-}
-
-static void
-init_pcm_format(Handle<Object> o, AudioFormatDescription &f)
-{
-  Handle<Value> v;
-
-  f.mFormatID = kALACFormatLinearPCM;
-  f.mFormatFlags = 0;  // XXX: These are pretty much ignored.
-  f.mFramesPerPacket = 1;
-  f.mReserved = 0;
-
-  f.mSampleRate = o->Get(sample_rate_symbol)->NumberValue();
-  f.mChannelsPerFrame = o->Get(channels_symbol)->Uint32Value();
-  f.mBitsPerChannel = o->Get(bit_depth_symbol)->Uint32Value();
-
-  f.mBytesPerPacket = f.mBytesPerFrame = f.mChannelsPerFrame * (f.mBitsPerChannel >> 3);
-}
-
-static void
-init_alac_format(Handle<Object> o, AudioFormatDescription &f)
-{
-  Handle<Value> v;
-
-  f.mFormatID = kALACFormatAppleLossless;
-  f.mReserved = 0;
-
-  // XXX: Zero because it's VBR.
-  f.mBytesPerPacket = 0;
-  f.mBytesPerFrame = 0;
-  f.mBitsPerChannel = 0;
-
-  f.mFramesPerPacket = o->Get(frames_per_packet_symbol)->Uint32Value();
-  f.mSampleRate = o->Get(sample_rate_symbol)->NumberValue();
-  f.mChannelsPerFrame = o->Get(channels_symbol)->Uint32Value();
-  switch (o->Get(bit_depth_symbol)->Uint32Value()) {
-    case 20: f.mFormatFlags = kTestFormatFlag_20BitSourceData; break;
-    case 24: f.mFormatFlags = kTestFormatFlag_24BitSourceData; break;
-    case 32: f.mFormatFlags = kTestFormatFlag_32BitSourceData; break;
-    default: f.mFormatFlags = kTestFormatFlag_16BitSourceData; break;
   }
 }
 
@@ -116,13 +74,46 @@ private:
     HandleScope scope;
 
     Handle<Object> o = Handle<Object>::Cast(args[0]);
-    Handle<Value> v_ret;
+    Handle<Value> v;
 
     Encoder *e = new Encoder();
 
-    init_pcm_format(o, e->inf_);
-    init_alac_format(o, e->outf_);
+    // Fill input format structure.
+    AudioFormatDescription &inf = e->inf_;
 
+    inf.mFormatID = kALACFormatLinearPCM;
+    inf.mFormatFlags = 0;  // XXX: These are pretty much ignored.
+    inf.mFramesPerPacket = 1;
+    inf.mReserved = 0;
+
+    inf.mSampleRate = o->Get(sample_rate_symbol)->NumberValue();
+    inf.mChannelsPerFrame = o->Get(channels_symbol)->Uint32Value();
+    inf.mBitsPerChannel = o->Get(bit_depth_symbol)->Uint32Value();
+
+    inf.mBytesPerPacket = inf.mBytesPerFrame = inf.mChannelsPerFrame * (inf.mBitsPerChannel >> 3);
+
+    // Fill output format structure.
+    AudioFormatDescription &outf = e->outf_;
+
+    outf.mFormatID = kALACFormatAppleLossless;
+    outf.mReserved = 0;
+
+    // XXX: Zero because it's VBR.
+    outf.mBytesPerPacket = 0;
+    outf.mBytesPerFrame = 0;
+    outf.mBitsPerChannel = 0;
+
+    outf.mFramesPerPacket = o->Get(frames_per_packet_symbol)->Uint32Value();
+    outf.mSampleRate = o->Get(sample_rate_symbol)->NumberValue();
+    outf.mChannelsPerFrame = o->Get(channels_symbol)->Uint32Value();
+    switch (o->Get(bit_depth_symbol)->Uint32Value()) {
+      case 20: outf.mFormatFlags = kTestFormatFlag_20BitSourceData; break;
+      case 24: outf.mFormatFlags = kTestFormatFlag_24BitSourceData; break;
+      case 32: outf.mFormatFlags = kTestFormatFlag_32BitSourceData; break;
+      default: outf.mFormatFlags = kTestFormatFlag_16BitSourceData; break;
+    }
+
+    // Init encoder.
     e->enc_.SetFrameSize(e->outf_.mFramesPerPacket);
     int32_t ret = e->enc_.InitializeEncoder(e->outf_);
     if (ret != ALAC_noErr) {
@@ -130,10 +121,12 @@ private:
       return throw_alac_error(ret);
     }
 
+    // Build cookie buffer.
     uint32_t cookieSize = e->enc_.GetMagicCookieSize(e->outf_.mChannelsPerFrame);
     char cookie[cookieSize];
     e->enc_.GetMagicCookie(cookie, &cookieSize);
 
+    // Init self.
     e->Wrap(args.This());
     e->handle_->Set(cookie_symbol, Buffer::New(cookie, cookieSize)->handle_);
     return scope.Close(e->handle_);
