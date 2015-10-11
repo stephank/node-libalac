@@ -2,7 +2,7 @@
   'targets': [
     {
       'target_name': 'binding',
-      'include_dirs': [ 'ALAC/codec' ],
+      'include_dirs': [ 'ALAC/codec', "<!(node -e \"require('nan')\")" ],
       'sources': [
         'ALAC/codec/EndianPortable.c',
         'ALAC/codec/ALACBitUtilities.c',

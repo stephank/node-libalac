@@ -3,6 +3,7 @@
 
 #include <v8.h>
 #include <node.h>
+#include <nan.h>
 #include <node_buffer.h>
 #include <ALACBitUtilities.h>
 #include <ALACEncoder.h>
@@ -14,11 +15,11 @@ using namespace node;
 namespace alac {
 
 
-static Persistent<String> frames_per_packet_symbol;
-static Persistent<String> sample_rate_symbol;
-static Persistent<String> channels_symbol;
-static Persistent<String> bit_depth_symbol;
-static Persistent<String> cookie_symbol;
+static Nan::Persistent<String> frames_per_packet_symbol;
+static Nan::Persistent<String> sample_rate_symbol;
+static Nan::Persistent<String> channels_symbol;
+static Nan::Persistent<String> bit_depth_symbol;
+static Nan::Persistent<String> cookie_symbol;
 
 // XXX: Stolen from convert-utility.
 enum
@@ -34,32 +35,30 @@ throw_alac_error(int32_t ret)
 {
   // XXX: The remaining values are unused in the codec itself.
   switch (ret) {
-    case kALAC_ParamError:
-      return ThrowException(Exception::Error(
-          String::New("ALAC error: invalid parameter")));
-    case kALAC_MemFullError:
-      return ThrowException(Exception::Error(
-          String::New("ALAC error: out of memory")));
-    default:
-      return ThrowException(Exception::Error(
-          String::New("ALAC error: unknown error")));
-  }
+      case kALAC_ParamError:
+        Nan::ThrowError("ALAC error: invalid parameter");
+      case kALAC_MemFullError:
+        Nan::ThrowError("ALAC error: out of memory");
+      default:
+        Nan::ThrowError("ALAC error: unknown error");
+    }
 }
 
 
-class Encoder : ObjectWrap
+class Encoder : public Nan::ObjectWrap
 {
 public:
   static void
   Initialize(Handle<Object> target)
   {
-    Handle<FunctionTemplate> t = FunctionTemplate::New(New);
+    Nan::HandleScope scope;
+    Local<FunctionTemplate> t = Nan::New<FunctionTemplate>(New);
     t->InstanceTemplate()->SetInternalFieldCount(1);
 
-    NODE_SET_PROTOTYPE_METHOD(t, "encode", Encode);
+    Nan::SetPrototypeMethod(t, "encode", Encode);
     // XXX: Finish is a no-op, so don't bother.
 
-    target->Set(String::NewSymbol("Encoder"), t->GetFunction());
+    Nan::Set(target, Nan::New<String>("Encoder").ToLocalChecked(), t->GetFunction());
   }
 
   virtual
@@ -68,13 +67,11 @@ public:
 private:
   Encoder() : enc_() {}
 
-  static Handle<Value>
-  New(const Arguments &args)
+  static void New(const Nan::FunctionCallbackInfo<v8::Value>& info)
   {
-    HandleScope scope;
+    Nan::HandleScope scope;
 
-    Handle<Object> o = Handle<Object>::Cast(args[0]);
-    Handle<Value> v;
+    Local<Object> o = Nan::To<Object>(info[0]).ToLocalChecked();
 
     Encoder *e = new Encoder();
 
@@ -86,9 +83,9 @@ private:
     inf.mFramesPerPacket = 1;
     inf.mReserved = 0;
 
-    inf.mSampleRate = o->Get(sample_rate_symbol)->NumberValue();
-    inf.mChannelsPerFrame = o->Get(channels_symbol)->Uint32Value();
-    inf.mBitsPerChannel = o->Get(bit_depth_symbol)->Uint32Value();
+    inf.mSampleRate = o->Get(Nan::New<String>("sampleRate").ToLocalChecked())->NumberValue();
+    inf.mChannelsPerFrame = o->Get(Nan::New<String>("channels").ToLocalChecked())->Uint32Value();
+    inf.mBitsPerChannel = o->Get(Nan::New<String>("bitDepth").ToLocalChecked())->Uint32Value();
 
     inf.mBytesPerPacket = inf.mBytesPerFrame = inf.mChannelsPerFrame * (inf.mBitsPerChannel >> 3);
 
@@ -103,10 +100,10 @@ private:
     outf.mBytesPerFrame = 0;
     outf.mBitsPerChannel = 0;
 
-    outf.mFramesPerPacket = o->Get(frames_per_packet_symbol)->Uint32Value();
-    outf.mSampleRate = o->Get(sample_rate_symbol)->NumberValue();
-    outf.mChannelsPerFrame = o->Get(channels_symbol)->Uint32Value();
-    switch (o->Get(bit_depth_symbol)->Uint32Value()) {
+    outf.mFramesPerPacket = o->Get(Nan::New<String>("framesPerPacket").ToLocalChecked())->Uint32Value();
+    outf.mSampleRate = o->Get(Nan::New<String>("sampleRate").ToLocalChecked())->NumberValue();
+    outf.mChannelsPerFrame = o->Get(Nan::New<String>("channels").ToLocalChecked())->Uint32Value();
+    switch (o->Get(Nan::New<String>("bitDepth").ToLocalChecked())->Uint32Value()) {
       case 20: outf.mFormatFlags = kTestFormatFlag_20BitSourceData; break;
       case 24: outf.mFormatFlags = kTestFormatFlag_24BitSourceData; break;
       case 32: outf.mFormatFlags = kTestFormatFlag_32BitSourceData; break;
@@ -118,7 +115,7 @@ private:
     int32_t ret = e->enc_.InitializeEncoder(e->outf_);
     if (ret != ALAC_noErr) {
       delete e;
-      return throw_alac_error(ret);
+      throw_alac_error(ret);
     }
 
     // Build cookie buffer.
@@ -127,27 +124,27 @@ private:
     e->enc_.GetMagicCookie(cookie, &cookieSize);
 
     // Init self.
-    e->Wrap(args.This());
-    e->handle_->Set(cookie_symbol, Buffer::New(cookie, cookieSize)->handle_);
-    return scope.Close(e->handle_);
+    e->Wrap(info.This());
+    // Nan::Set(e, Nan::New<String>("cookie").ToLocalChecked(), Nan::NewBuffer(cookie, cookieSize).ToLocalChecked());
+    // e->handle_->Set(Nan::New<String>("cookie").ToLocalChecked(), Nan::NewBuffer(cookie, cookieSize).ToLocalChecked());
+    info.GetReturnValue().Set(info.This());
   }
 
-  static Handle<Value>
-  Encode(const Arguments &args)
+  static void Encode(const Nan::FunctionCallbackInfo<v8::Value>& info)
   {
-    HandleScope scope;
+    Nan::HandleScope scope;
 
-    Encoder *e = ObjectWrap::Unwrap<Encoder>(args.This());
+    Encoder *e = Nan::ObjectWrap::Unwrap<Encoder>(info.This());
 
-    unsigned char *in = (unsigned char *) Buffer::Data(args[0]);
-    unsigned char *out = (unsigned char *) Buffer::Data(args[1]);
-    int32_t size = (int32_t) Buffer::Length(args[0]);
+    unsigned char *in = (unsigned char *) Buffer::Data(info[0]);
+    unsigned char *out = (unsigned char *) Buffer::Data(info[1]);
+    int32_t size = (int32_t) Buffer::Length(info[0]);
 
     int32_t ret = e->enc_.Encode(e->inf_, e->outf_, in, out, &size);
     if (ret != ALAC_noErr)
-      return throw_alac_error(ret);
+      throw_alac_error(ret);
 
-    return scope.Close(Uint32::New(size));
+    info.GetReturnValue().Set(Nan::New<Uint32>(size));
   }
 
 private:
@@ -157,18 +154,19 @@ private:
 };
 
 
-class Decoder : ObjectWrap
+class Decoder : public Nan::ObjectWrap
 {
 public:
   static void
   Initialize(Handle<Object> target)
   {
-    Handle<FunctionTemplate> t = FunctionTemplate::New(New);
+    Nan::HandleScope scope;
+    Local<FunctionTemplate> t = Nan::New<FunctionTemplate>(New);
     t->InstanceTemplate()->SetInternalFieldCount(1);
 
-    NODE_SET_PROTOTYPE_METHOD(t, "decode", Decode);
+    Nan::SetPrototypeMethod(t, "decode", Decode);
 
-    target->Set(String::NewSymbol("Decoder"), t->GetFunction());
+    Nan::Set(target, Nan::New<String>("Decoder").ToLocalChecked(), t->GetFunction());
   }
 
   virtual
@@ -177,50 +175,48 @@ public:
 private:
   Decoder() : dec_() {}
 
-  static Handle<Value>
-  New(const Arguments &args)
+  static void New(const Nan::FunctionCallbackInfo<v8::Value>& info)
   {
-    HandleScope scope;
+    Nan::HandleScope scope;
 
-    Handle<Object> o = Handle<Object>::Cast(args[0]);
+    Handle<Object> o = Handle<Object>::Cast(info[0]);
     Handle<Value> v;
 
     Decoder *d = new Decoder();
 
     // Fill parameters.
-    v = o->Get(cookie_symbol);
-    d->channels_= o->Get(channels_symbol)->Uint32Value();
-    d->frames_ = o->Get(frames_per_packet_symbol)->Uint32Value();
+    v = o->Get(Nan::New<String>("cookie").ToLocalChecked());
+    d->channels_= o->Get(Nan::New<String>("channels").ToLocalChecked())->Uint32Value();
+    d->frames_ = o->Get(Nan::New<String>("framesPerPacket").ToLocalChecked())->Uint32Value();
 
     // Init decoder.
     int32_t ret = d->dec_.Init(Buffer::Data(v), Buffer::Length(v));
     if (ret != ALAC_noErr) {
       delete d;
-      return throw_alac_error(ret);
+      throw_alac_error(ret);
     }
 
     // Init self.
-    d->Wrap(args.This());
-    return scope.Close(d->handle_);
+    d->Wrap(info.This());
+    info.GetReturnValue().Set(info.This());
   }
 
-  static Handle<Value>
-  Decode(const Arguments &args)
+  static void Decode(const Nan::FunctionCallbackInfo<v8::Value>& info)
   {
-    HandleScope scope;
+    Nan::HandleScope scope;
 
-    Decoder *d = ObjectWrap::Unwrap<Decoder>(args.This());
+    Decoder *d = Nan::ObjectWrap::Unwrap<Decoder>(info.This());
 
     BitBuffer in;
-    BitBufferInit(&in, (uint8_t *) Buffer::Data(args[0]), Buffer::Length(args[0]));
-    uint8_t *out = (uint8_t *) Buffer::Data(args[1]);
+    BitBufferInit(&in, (uint8_t *) Buffer::Data(info[0]), Buffer::Length(info[0]));
+    uint8_t *out = (uint8_t *) Buffer::Data(info[1]);
 
     uint32_t numFrames;
     int32_t ret = d->dec_.Decode(&in, out, d->frames_, d->channels_, &numFrames);
     if (ret != ALAC_noErr)
-      return throw_alac_error(ret);
+      throw_alac_error(ret);
 
-    return scope.Close(Uint32::New(numFrames));
+    info.GetReturnValue().Set(Nan::New<Uint32>(numFrames));
   }
 
 private:
@@ -233,13 +229,13 @@ private:
 static void
 Initialize(Handle<Object> target)
 {
-  HandleScope scope;
+  Nan::HandleScope scope;
 
-  frames_per_packet_symbol = NODE_PSYMBOL("framesPerPacket");
-  sample_rate_symbol = NODE_PSYMBOL("sampleRate");
-  channels_symbol = NODE_PSYMBOL("channels");
-  bit_depth_symbol = NODE_PSYMBOL("bitDepth");
-  cookie_symbol = NODE_PSYMBOL("cookie");
+  frames_per_packet_symbol.Reset(Nan::New<String>("framesPerPacket").ToLocalChecked());
+  sample_rate_symbol.Reset(Nan::New<String>("sampleRate").ToLocalChecked());
+  channels_symbol.Reset(Nan::New<String>("channels").ToLocalChecked());
+  bit_depth_symbol.Reset(Nan::New<String>("bitDepth").ToLocalChecked());
+  cookie_symbol.Reset(Nan::New<String>("cookie").ToLocalChecked());
 
   NODE_DEFINE_CONSTANT(target, kALACDefaultFramesPerPacket);
   NODE_DEFINE_CONSTANT(target, kALACMaxEscapeHeaderBytes);
@@ -254,6 +250,7 @@ Initialize(Handle<Object> target)
 extern "C" void
 init(Handle<Object> target)
 {
+  Nan::HandleScope scope;
   alac::Initialize(target);
 }
 
