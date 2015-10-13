@@ -126,8 +126,7 @@ private:
 
     // Init self.
     e->Wrap(info.This());
-    // Nan::Set(e, Nan::New<String>("cookie").ToLocalChecked(), Nan::NewBuffer(cookie, cookieSize).ToLocalChecked());
-    // e->handle_->Set(Nan::New<String>("cookie").ToLocalChecked(), Nan::NewBuffer(cookie, cookieSize).ToLocalChecked());
+    e->handle()->Set(Nan::New<String>("cookie").ToLocalChecked(), Nan::NewBuffer(cookie, cookieSize).ToLocalChecked());
     info.GetReturnValue().Set(info.This());
   }
 
