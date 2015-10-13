@@ -30,7 +30,7 @@ enum
     kTestFormatFlag_32BitSourceData    = 4
 };
 
-static Handle<Value>
+void
 throw_alac_error(int32_t ret)
 {
   // XXX: The remaining values are unused in the codec itself.
@@ -116,6 +116,7 @@ private:
     if (ret != ALAC_noErr) {
       delete e;
       throw_alac_error(ret);
+      return;
     }
 
     // Build cookie buffer.
@@ -141,8 +142,10 @@ private:
     int32_t size = (int32_t) Buffer::Length(info[0]);
 
     int32_t ret = e->enc_.Encode(e->inf_, e->outf_, in, out, &size);
-    if (ret != ALAC_noErr)
+    if (ret != ALAC_noErr) {
       throw_alac_error(ret);
+      return;
+    }
 
     info.GetReturnValue().Set(Nan::New<Uint32>(size));
   }
@@ -194,6 +197,7 @@ private:
     if (ret != ALAC_noErr) {
       delete d;
       throw_alac_error(ret);
+      return;
     }
 
     // Init self.
@@ -213,8 +217,10 @@ private:
 
     uint32_t numFrames;
     int32_t ret = d->dec_.Decode(&in, out, d->frames_, d->channels_, &numFrames);
-    if (ret != ALAC_noErr)
+    if (ret != ALAC_noErr) {
       throw_alac_error(ret);
+      return;
+    }
 
     info.GetReturnValue().Set(Nan::New<Uint32>(numFrames));
   }
