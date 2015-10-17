@@ -1,0 +1,13 @@
+diff --git a/ALAC/codec/EndianPortable.c b/ALAC/codec/EndianPortable.c
+index 5a7d5b8..16604cb 100644
+--- a/ALAC/codec/EndianPortable.c
++++ b/ALAC/codec/EndianPortable.c
+@@ -40,6 +40,8 @@
+ #define TARGET_RT_LITTLE_ENDIAN 1
+ #elif defined (TARGET_OS_WIN32)
+ #define TARGET_RT_LITTLE_ENDIAN 1
++#elif defined (__ARMEL__)
++#define TARGET_RT_LITTLE_ENDIAN 1
+ #endif
+ 
+ uint16_t Swap16NtoB(uint16_t inUInt16)
