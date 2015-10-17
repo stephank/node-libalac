@@ -35,13 +35,13 @@ throw_alac_error(int32_t ret)
 {
   // XXX: The remaining values are unused in the codec itself.
   switch (ret) {
-      case kALAC_ParamError:
-        Nan::ThrowError("ALAC error: invalid parameter");
-      case kALAC_MemFullError:
-        Nan::ThrowError("ALAC error: out of memory");
-      default:
-        Nan::ThrowError("ALAC error: unknown error");
-    }
+    case kALAC_ParamError:
+      Nan::ThrowError("ALAC error: invalid parameter");
+    case kALAC_MemFullError:
+      Nan::ThrowError("ALAC error: out of memory");
+    default:
+      Nan::ThrowError("ALAC error: unknown error");
+  }
 }
 
 
@@ -67,7 +67,8 @@ public:
 private:
   Encoder() : enc_() {}
 
-  static void New(const Nan::FunctionCallbackInfo<v8::Value>& info)
+  static void
+  New(const Nan::FunctionCallbackInfo<v8::Value>& info)
   {
     Nan::HandleScope scope;
 
@@ -130,7 +131,8 @@ private:
     info.GetReturnValue().Set(info.This());
   }
 
-  static void Encode(const Nan::FunctionCallbackInfo<v8::Value>& info)
+  static void
+  Encode(const Nan::FunctionCallbackInfo<v8::Value>& info)
   {
     Nan::HandleScope scope;
 
@@ -177,7 +179,8 @@ public:
 private:
   Decoder() : dec_() {}
 
-  static void New(const Nan::FunctionCallbackInfo<v8::Value>& info)
+  static void
+  New(const Nan::FunctionCallbackInfo<v8::Value>& info)
   {
     Nan::HandleScope scope;
 
@@ -204,7 +207,8 @@ private:
     info.GetReturnValue().Set(info.This());
   }
 
-  static void Decode(const Nan::FunctionCallbackInfo<v8::Value>& info)
+  static void
+  Decode(const Nan::FunctionCallbackInfo<v8::Value>& info)
   {
     Nan::HandleScope scope;
 

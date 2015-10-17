@@ -13,14 +13,14 @@
     "url": "http://stephan.kochen.nl/"
   },
   "license": "Apache-2.0",
+  "dependencies": {
+    "nan": "^2.1.0"
+  },
   "devDependencies": {
     "tap": "0.4"
   },
   "scripts": {
     "test": "tap ./tests/tests.js"
   },
-  "main": "./index.js",
-  "dependencies": {
-    "nan": "^2.1.0"
-  }
+  "main": "./index.js"
 }
