@@ -83,9 +83,9 @@ private:
     inf.mFramesPerPacket = 1;
     inf.mReserved = 0;
 
-    inf.mSampleRate = o->Get(Nan::New<String>("sampleRate").ToLocalChecked())->NumberValue();
-    inf.mChannelsPerFrame = o->Get(Nan::New<String>("channels").ToLocalChecked())->Uint32Value();
-    inf.mBitsPerChannel = o->Get(Nan::New<String>("bitDepth").ToLocalChecked())->Uint32Value();
+    inf.mSampleRate = o->Get(Nan::New<String>(sample_rate_symbol))->NumberValue();
+    inf.mChannelsPerFrame = o->Get(Nan::New<String>(channels_symbol))->Uint32Value();
+    inf.mBitsPerChannel = o->Get(Nan::New<String>(bit_depth_symbol))->Uint32Value();
 
     inf.mBytesPerPacket = inf.mBytesPerFrame = inf.mChannelsPerFrame * (inf.mBitsPerChannel >> 3);
 
@@ -100,10 +100,10 @@ private:
     outf.mBytesPerFrame = 0;
     outf.mBitsPerChannel = 0;
 
-    outf.mFramesPerPacket = o->Get(Nan::New<String>("framesPerPacket").ToLocalChecked())->Uint32Value();
-    outf.mSampleRate = o->Get(Nan::New<String>("sampleRate").ToLocalChecked())->NumberValue();
-    outf.mChannelsPerFrame = o->Get(Nan::New<String>("channels").ToLocalChecked())->Uint32Value();
-    switch (o->Get(Nan::New<String>("bitDepth").ToLocalChecked())->Uint32Value()) {
+    outf.mFramesPerPacket = o->Get(Nan::New<String>(frames_per_packet_symbol))->Uint32Value();
+    outf.mSampleRate = o->Get(Nan::New<String>(sample_rate_symbol))->NumberValue();
+    outf.mChannelsPerFrame = o->Get(Nan::New<String>(channels_symbol))->Uint32Value();
+    switch (o->Get(Nan::New<String>(bit_depth_symbol))->Uint32Value()) {
       case 20: outf.mFormatFlags = kTestFormatFlag_20BitSourceData; break;
       case 24: outf.mFormatFlags = kTestFormatFlag_24BitSourceData; break;
       case 32: outf.mFormatFlags = kTestFormatFlag_32BitSourceData; break;
@@ -126,7 +126,7 @@ private:
 
     // Init self.
     e->Wrap(info.This());
-    e->handle()->Set(Nan::New<String>("cookie").ToLocalChecked(), Nan::NewBuffer(cookie, cookieSize).ToLocalChecked());
+    e->handle()->Set(Nan::New<String>(cookie_symbol), Nan::NewBuffer(cookie, cookieSize).ToLocalChecked());
     info.GetReturnValue().Set(info.This());
   }
 
@@ -187,9 +187,9 @@ private:
     Decoder *d = new Decoder();
 
     // Fill parameters.
-    v = o->Get(Nan::New<String>("cookie").ToLocalChecked());
-    d->channels_= o->Get(Nan::New<String>("channels").ToLocalChecked())->Uint32Value();
-    d->frames_ = o->Get(Nan::New<String>("framesPerPacket").ToLocalChecked())->Uint32Value();
+    v = o->Get(Nan::New<String>(cookie_symbol));
+    d->channels_= o->Get(Nan::New<String>(channels_symbol))->Uint32Value();
+    d->frames_ = o->Get(Nan::New<String>(frames_per_packet_symbol))->Uint32Value();
 
     // Init decoder.
     int32_t ret = d->dec_.Init(Buffer::Data(v), Buffer::Length(v));
