@@ -2,6 +2,9 @@
 
 Bindings to the official Apple Lossless (ALAC) encoder and decoder.
 
+**WARNING: This module is rather broken. I wrote it with poor understanding of
+how the codec works. Use at your own risk!**
+
 ### Installing
 
     $ npm install libalac
