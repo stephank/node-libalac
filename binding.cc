@@ -51,7 +51,6 @@ public:
   static void
   Initialize(Handle<Object> target)
   {
-    Nan::HandleScope scope;
     Local<FunctionTemplate> t = Nan::New<FunctionTemplate>(New);
     t->InstanceTemplate()->SetInternalFieldCount(1);
 
@@ -164,7 +163,6 @@ public:
   static void
   Initialize(Handle<Object> target)
   {
-    Nan::HandleScope scope;
     Local<FunctionTemplate> t = Nan::New<FunctionTemplate>(New);
     t->InstanceTemplate()->SetInternalFieldCount(1);
 
@@ -259,7 +257,6 @@ Initialize(Handle<Object> target)
 extern "C" void
 init(Handle<Object> target)
 {
-  Nan::HandleScope scope;
   alac::Initialize(target);
 }
 
