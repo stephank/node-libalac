@@ -7,11 +7,11 @@
     "type": "git",
     "url": "http://github.com/stephank/node-libalac.git"
   },
-  "author": {
-    "name": "Stéphan Kochen",
-    "email": "stephan@kochen.nl",
-    "url": "http://stephan.kochen.nl/"
-  },
+  "contributors": [
+    "Stéphan Kochen <stephan@kochen.nl> (https://github.com/stephank)",
+    "Adam Duncan <adam.duncan@clock.co.uk> (https://github.com/microadam)",
+    "jacaru <jacaru@gmail.com> (https://github.com/jacaru)"
+  ],
   "license": "Apache-2.0",
   "dependencies": {
     "nan": "^2.1.0"
