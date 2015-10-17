@@ -1,6 +1,6 @@
 {
   "name": "libalac",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Apple Lossless codec bindings",
   "homepage": "http://github.com/stephank/node-libalac",
   "repository": {
