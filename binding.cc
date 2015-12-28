@@ -121,7 +121,7 @@ private:
 
     // Build cookie buffer.
     uint32_t cookieSize = e->enc_.GetMagicCookieSize(e->outf_.mChannelsPerFrame);
-    char cookie[cookieSize];
+	char* cookie = (char*)alloca(sizeof(char) * (cookieSize));
     e->enc_.GetMagicCookie(cookie, &cookieSize);
 
     // Init self.
